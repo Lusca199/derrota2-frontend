@@ -1,4 +1,4 @@
-// src/App.jsx (Versão completa e corrigida com novas rotas)
+// src/App.jsx (versão completa e final com rota de busca)
 
 import { Routes, Route, Link as RouterLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -9,10 +9,11 @@ import LeftSidebar from './components/LeftSidebar.jsx';
 import Trends from './components/Trends.jsx';
 import appIcon from './assets/icon.png';
 import PublicationDetailPage from './pages/PublicationDetailPage';
-
-// --- IMPORTAR AS NOVAS PÁGINAS ---
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+
+// 1. IMPORTAR A NOVA PÁGINA DE BUSCA
+import SearchPage from './pages/SearchPage';
 
 // Importações do MUI
 import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
@@ -79,10 +80,11 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/post/:publicationId" element={<PublicationDetailPage />} />
-            
-            {/* --- ADICIONAR AS NOVAS ROTAS AQUI --- */}
             <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
             <Route path="/resetar-senha" element={<ResetPasswordPage />} />
+            
+            {/* 2. ADICIONAR A ROTA DE BUSCA */}
+            <Route path="/search" element={<SearchPage />} />
 
           </Routes>
         </Box>
@@ -101,7 +103,6 @@ function App() {
             </Box>
           </Box>
         )}
-
       </Box>
     </Box>
   );
