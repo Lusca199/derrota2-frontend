@@ -1,4 +1,4 @@
-// src/pages/HomePage.jsx (versão simplificada)
+// src/pages/HomePage.jsx (versão final e otimizada)
 
 import { useState, useEffect } from 'react';
 import api from '../services/api';
@@ -29,19 +29,26 @@ function HomePage() {
     fetchPublications();
   }, []);
 
-  const handleNewPublication = () => {
-    fetchPublications();
+  // O onNewPublication pode simplesmente recarregar tudo, pois é uma ação menos frequente.
+  const handleNewPublication = (newPublication) => {
+    setPublications(prevPublications => [newPublication, ...prevPublications]);
   };
 
+  // Esta função já está ótima, remove o item do estado localmente.
   const handleDeletePublication = (deletedPostId) => {
     setPublications(publications.filter(pub => pub.id_pub !== deletedPostId));
   };
 
-  const handleUpdatePublication = () => {
-    fetchPublications();
+  // --- FUNÇÃO OTIMIZADA AQUI ---
+  // Recebe o post atualizado e substitui apenas ele na lista, sem nova chamada à API.
+  const handleUpdatePublication = (updatedPublication) => {
+    setPublications(
+      publications.map(pub =>
+        pub.id_pub === updatedPublication.id_pub ? updatedPublication : pub
+      )
+    );
   };
 
-  // O return agora é muito mais simples, sem lógica de layout
   return (
     <Box>
       <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', borderBottom: 1, borderColor: 'divider', pb: 2 }}>

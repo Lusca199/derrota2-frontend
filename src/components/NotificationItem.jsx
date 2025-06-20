@@ -1,7 +1,10 @@
 // Ficheiro: Testes/derrota2-frontend/src/components/NotificationItem.jsx
-// NOVO FICHEIRO
+// Versão FINAL com lógica de navegação
 
 import api from '../services/api';
+import { useNavigate } from 'react-router-dom'; // 1. IMPORTAR O useNavigate
+
+// MUI Imports
 import { Box, Typography, ListItem, ListItemIcon, ListItemText, Badge } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -17,20 +20,42 @@ const notificationIcons = {
 };
 
 function NotificationItem({ notification, onMarkAsRead }) {
+  // 2. OBTER A FUNÇÃO DE NAVEGAÇÃO
+  const navigate = useNavigate();
   
   const handleClick = async () => {
-    // Se a notificação já não estiver lida, faz a chamada à API
+    // A lógica de marcar como lida continua a mesma
     if (!notification.lida) {
       try {
         await api.patch(`/notificacoes/${notification.id_notif}/read`);
-        // Avisa o componente pai (NotificationsPage) para atualizar o estado
         onMarkAsRead(notification.id_notif); 
       } catch (error) {
         console.error("Erro ao marcar notificação como lida:", error);
       }
     }
-    // No futuro, podemos adicionar navegação aqui.
-    // Ex: clicar numa notificação de 'like' leva para a publicação.
+
+    // 3. ADICIONAR A LÓGICA DE NAVEGAÇÃO
+    // Verifica se existe um ID de origem para navegar
+    if (!notification.origem_id) {
+      console.log("Notificação sem origem_id, não é possível navegar.");
+      return;
+    }
+
+    // Decide para onde navegar com base no tipo da notificação
+    switch (notification.tipo) {
+      case 'FOLLOW':
+        navigate(`/profile/${notification.origem_id}`);
+        break;
+      
+      case 'LIKE':
+      case 'REPLY':
+      case 'MENCION': // 'Mencionar' em português, 'MENCION' como está no seu ENUM
+        navigate(`/post/${notification.origem_id}`);
+        break;
+      
+      default:
+        console.log(`Tipo de notificação (${notification.tipo}) não possui uma ação de navegação definida.`);
+    }
   };
 
   return (
@@ -40,12 +65,10 @@ function NotificationItem({ notification, onMarkAsRead }) {
       sx={{
         borderBottom: 1,
         borderColor: 'divider',
-        // Aplica um fundo ligeiramente diferente se a notificação não foi lida
         bgcolor: notification.lida ? 'transparent' : 'rgba(255, 255, 255, 0.05)',
       }}
     >
       <ListItemIcon>
-        {/* Mostra um ponto (Badge) se a notificação não foi lida */}
         <Badge color="primary" variant="dot" invisible={notification.lida}>
           {notificationIcons[notification.tipo] || <PersonIcon fontSize="large" />}
         </Badge>
