@@ -128,7 +128,7 @@ function PublicationDetailPage() {
   }
 
   // --- Renderização principal ---
-  return (
+ return (
     <Paper elevation={0}>
       {/* Exibe o item da publicação principal */}
       <PublicationItem 
@@ -136,13 +136,15 @@ function PublicationDetailPage() {
         onPostDeleted={handlePostDeleted} 
         onPostUpdated={handlePostUpdated}
       />
-      
+
       {/* Exibe o formulário para postar um novo comentário */}
       <CommentForm publicationId={publicationId} onCommentPosted={handleCommentPosted} />
-      
+
       {/* Mapeia e exibe a lista de comentários existentes */}
       <Box>
         {comments.length > 0 ? (
+            // A 'key' deve estar no primeiro elemento dentro do map.
+            // O seu código já estava correto aqui.
             comments.map((comment) => (
                 <CommentItem key={comment.id_comentario} comment={comment} />
             ))

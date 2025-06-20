@@ -1,4 +1,4 @@
-// src/App.jsx (versão completa e final com rota de busca)
+// src/App.jsx (versão final com a rota de notificações)
 
 import { Routes, Route, Link as RouterLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -11,9 +11,9 @@ import appIcon from './assets/icon.png';
 import PublicationDetailPage from './pages/PublicationDetailPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-
-// 1. IMPORTAR A NOVA PÁGINA DE BUSCA
 import SearchPage from './pages/SearchPage';
+// --- NOVA IMPORTAÇÃO AQUI ---
+import NotificationsPage from './pages/NotificationsPage';
 
 // Importações do MUI
 import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
@@ -82,9 +82,10 @@ function App() {
             <Route path="/post/:publicationId" element={<PublicationDetailPage />} />
             <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
             <Route path="/resetar-senha" element={<ResetPasswordPage />} />
-            
-            {/* 2. ADICIONAR A ROTA DE BUSCA */}
             <Route path="/search" element={<SearchPage />} />
+
+            {/* --- NOVA ROTA ADICIONADA AQUI --- */}
+            <Route path="/notificacoes" element={<NotificationsPage />} />
 
           </Routes>
         </Box>
