@@ -1,5 +1,5 @@
 // Ficheiro: Testes/derrota2-frontend/src/context/AuthContext.jsx
-// Versão com a correção do bug de login
+// Versão FINAL, corrigida para incluir a ROLE do usuário
 
 import { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
 import api from '../services/api';
@@ -31,7 +31,9 @@ export function AuthProvider({ children }) {
           if (decodedUser.exp * 1000 < Date.now()) {
             logout();
           } else {
-            setUser({ id: decodedUser.id, email: decodedUser.email });
+            // --- CORREÇÃO 1 AQUI ---
+            // Incluímos a 'role' ao carregar o usuário do token guardado
+            setUser({ id: decodedUser.id, email: decodedUser.email, role: decodedUser.role });
             setToken(storagedToken);
           }
         } catch (error) {
@@ -74,12 +76,14 @@ export function AuthProvider({ children }) {
       const response = await api.post('/usuarios/login', { email, senha: password });
       const { token: newToken } = response.data;
 
-      // --- CORREÇÃO AQUI ---
-      localStorage.setItem('@AppX:token', newToken); // Corrigido para usar newToken
+      localStorage.setItem('@AppX:token', newToken);
 
       api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       const decodedUser = JSON.parse(atob(newToken.split('.')[1]));
-      setUser({ id: decodedUser.id, email: decodedUser.email });
+      
+      // --- CORREÇÃO 2 AQUI ---
+      // Incluímos a 'role' ao definir o usuário após o login
+      setUser({ id: decodedUser.id, email: decodedUser.email, role: decodedUser.role });
       setToken(newToken);
       return true;
     } catch (error) {
@@ -98,7 +102,7 @@ export function AuthProvider({ children }) {
       logout,
       register,
     }),
-    [user, token, loading, logout] // Removido 'register' da lista de dependências do useMemo
+    [user, token, loading, logout]
   );
 
   if (loading) {

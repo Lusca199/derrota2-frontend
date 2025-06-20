@@ -1,4 +1,4 @@
-// src/App.jsx (versão final com a rota de notificações)
+// src/App.jsx (versão com a rota de moderação integrada)
 
 import { Routes, Route, Link as RouterLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -12,8 +12,11 @@ import PublicationDetailPage from './pages/PublicationDetailPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SearchPage from './pages/SearchPage';
-// --- NOVA IMPORTAÇÃO AQUI ---
 import NotificationsPage from './pages/NotificationsPage';
+
+// --- 1. IMPORTAR OS NOVOS COMPONENTES ---
+import ModeratorRoute from './components/ModeratorRoute';
+import ModerationPage from './pages/ModerationPage';
 
 // Importações do MUI
 import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
@@ -83,9 +86,17 @@ function App() {
             <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
             <Route path="/resetar-senha" element={<ResetPasswordPage />} />
             <Route path="/search" element={<SearchPage />} />
-
-            {/* --- NOVA ROTA ADICIONADA AQUI --- */}
             <Route path="/notificacoes" element={<NotificationsPage />} />
+
+            {/* --- 2. ADICIONAR A NOVA ROTA PROTEGIDA --- */}
+            <Route 
+              path="/moderation"
+              element={
+                <ModeratorRoute>
+                  <ModerationPage />
+                </ModeratorRoute>
+              }
+            />
 
           </Routes>
         </Box>
