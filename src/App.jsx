@@ -1,4 +1,4 @@
-// src/App.jsx (versão com a rota de moderação integrada)
+// src/App.jsx (VERSÃO FINAL com a rota de verificação 2FA)
 
 import { Routes, Route, Link as RouterLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -13,10 +13,12 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SearchPage from './pages/SearchPage';
 import NotificationsPage from './pages/NotificationsPage';
+import ModeratorRoute from './components/ModeratorRoute.jsx';
+import ModerationPage from './pages/ModerationPage.jsx';
+import SettingsPage from './pages/SettingsPage.jsx';
+// --- 1. IMPORTAR A NOVA PÁGINA DE VERIFICAÇÃO 2FA ---
+import Verify2FAPage from './pages/Verify2FAPage.jsx';
 
-// --- 1. IMPORTAR OS NOVOS COMPONENTES ---
-import ModeratorRoute from './components/ModeratorRoute';
-import ModerationPage from './pages/ModerationPage';
 
 // Importações do MUI
 import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
@@ -87,8 +89,7 @@ function App() {
             <Route path="/resetar-senha" element={<ResetPasswordPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/notificacoes" element={<NotificationsPage />} />
-
-            {/* --- 2. ADICIONAR A NOVA ROTA PROTEGIDA --- */}
+            
             <Route 
               path="/moderation"
               element={
@@ -97,6 +98,11 @@ function App() {
                 </ModeratorRoute>
               }
             />
+
+            <Route path="/settings" element={<SettingsPage />} />
+
+            {/* --- 2. ADICIONAR A NOVA ROTA PARA A PÁGINA DE VERIFICAÇÃO --- */}
+            <Route path="/verify-2fa" element={<Verify2FAPage />} />
 
           </Routes>
         </Box>

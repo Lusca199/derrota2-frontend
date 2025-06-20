@@ -1,4 +1,4 @@
-// src/components/PublicationItem.jsx (versão final, completa e com menções)
+// src/components/PublicationItem.jsx (versão final, com links clicáveis)
 
 import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -15,44 +15,40 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import { blue, red } from '@mui/material/colors';
 
-// --- NOVA FUNÇÃO AUXILIAR PARA RENDERIZAR O TEXTO COM MENÇÕES ---
-// Esta função recebe o texto e a lista de menções (com user_id e username) vinda da API.
-const renderTextWithMentions = (text, mentions = []) => {
+// --- FUNÇÃO AUXILIAR ATUALIZADA PARA RENDERIZAR MENÇÕES E LINKS ---
+const renderTextWithLinks = (text, mentions = []) => {
     if (!text) return null;
 
-    // Se não houver menções na publicação, retorna o texto simples para melhor performance.
-    if (!mentions || mentions.length === 0) {
-        return <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', my: 1 }}>{text}</Typography>;
-    }
+    // Regex combinada para encontrar menções E URLs.
+    // O 'ou' (|) permite capturar qualquer um dos padrões.
+    const combinedRegex = /(@(\w+))|((https?:\/\/[^\s]+))/g;
 
-    // Regex para encontrar as menções no texto.
-    const mentionRegex = /@(\w+)/g;
-    
-    // Divide o texto em partes: texto normal e menções.
-    // Ex: "Olá @viana como está?" -> ["Olá ", "viana", " como está?"]
-    const parts = text.split(mentionRegex);
+    const parts = text.split(combinedRegex).filter(part => part !== undefined);
 
     return (
         <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', my: 1 }}>
             {parts.map((part, index) => {
-                // As partes com índice ímpar são os usernames capturados pela regex.
-                if (index % 2 === 1) { 
-                    const mention = mentions.find(m => m.username.toLowerCase() === part.toLowerCase());
+                // Verifica se a parte é uma menção
+                if (part.startsWith('@')) {
+                    const username = part.substring(1);
+                    const mention = mentions.find(m => m.username.toLowerCase() === username.toLowerCase());
                     if (mention) {
                         return (
-                            <Link 
-                                component={RouterLink} 
-                                to={`/profile/${mention.user_id}`} 
-                                key={index} 
-                                onClick={(e) => e.stopPropagation()}
-                                sx={{fontWeight: 'bold'}}
-                            >
-                                @{part}
+                            <Link component={RouterLink} to={`/profile/${mention.user_id}`} key={index} onClick={(e) => e.stopPropagation()} sx={{fontWeight: 'bold'}}>
+                                {part}
                             </Link>
                         );
                     }
                 }
-                // Retorna o texto normal.
+                // Verifica se a parte é um URL
+                if (part.startsWith('http')) {
+                    return (
+                        <Link href={part} key={index} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                            {part}
+                        </Link>
+                    );
+                }
+                // Se não for nenhum dos dois, é texto normal
                 return part;
             })}
         </Typography>
@@ -78,6 +74,11 @@ function PublicationItem({ publication, onPostDeleted, onPostUpdated }) {
     // Constrói a URL completa para a imagem de perfil do autor
     const fullAuthorImageUrl = publication.autor_foto_perfil_url
         ? `http://localhost:3001${publication.autor_foto_perfil_url}`
+        : null;
+
+    // Constrói a URL completa para a mídia da publicação
+    const fullMediaUrl = publication.media_url
+        ? `http://localhost:3001${publication.media_url}`
         : null;
 
     // --- Funções de Manipulação de Eventos ---
@@ -226,16 +227,27 @@ function PublicationItem({ publication, onPostDeleted, onPostUpdated }) {
                     </Box>
                 ) : (
                     <>
-                        {/* Chamada à nova função que renderiza o texto com os links de menção */}
-                        {renderTextWithMentions(publication.texto, publication.mencoes)}
+                        {/* Chamada à nova função que renderiza menções e links */}
+                        {renderTextWithLinks(publication.texto, publication.mencoes)}
                        
-                        {publication.media_url && (
+                        {fullMediaUrl && (
                             <Box sx={{ my: 1, borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-                                <img
-                                    src={`http://localhost:3001${publication.media_url}`}
-                                    alt="Mídia da publicação"
-                                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                                />
+                                {publication.media_type === 'IMAGE' && (
+                                    <img
+                                        src={fullMediaUrl}
+                                        alt="Mídia da publicação"
+                                        style={{ width: '100%', height: 'auto', display: 'block' }}
+                                    />
+                                )}
+                                {publication.media_type === 'VIDEO' && (
+                                    <video
+                                        src={fullMediaUrl}
+                                        controls
+                                        playsInline
+                                        loop
+                                        style={{ width: '100%', height: 'auto', display: 'block' }}
+                                    />
+                                )}
                             </Box>
                         )}
                     </>

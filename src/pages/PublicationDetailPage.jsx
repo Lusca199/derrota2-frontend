@@ -1,18 +1,34 @@
-// src/pages/PublicationDetailPage.jsx (Versão final e corrigida)
+// src/pages/PublicationDetailPage.jsx
+// Versão com o estado para gerir as respostas a comentários
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-
-// Importações de Componentes
 import PublicationItem from '../components/PublicationItem';
-import CommentItem from '../components/CommentItem.jsx'; // Usando .jsx para clareza
-
-// Importações do MUI
+import CommentItem from '../components/CommentItem.jsx';
 import { Box, Typography, CircularProgress, TextField, Button, Avatar, Paper, Alert } from '@mui/material';
 
-// --- Sub-componente: Formulário de Comentário ---
+const buildCommentTree = (commentsList) => {
+  const commentMap = {};
+  const tree = [];
+  commentsList.forEach(comment => {
+    commentMap[comment.id_comentario] = { ...comment, children: [] };
+  });
+  commentsList.forEach(comment => {
+    if (comment.coment_pai_id) {
+      if (commentMap[comment.coment_pai_id]) {
+        commentMap[comment.coment_pai_id].children.push(commentMap[comment.id_comentario]);
+      }
+    } else {
+      tree.push(commentMap[comment.id_comentario]);
+    }
+  });
+  return tree;
+};
+
+
+// O formulário principal para comentários de primeiro nível
 const CommentForm = ({ publicationId, onCommentPosted }) => {
     const { signed, user } = useAuth();
     const [text, setText] = useState('');
@@ -24,9 +40,10 @@ const CommentForm = ({ publicationId, onCommentPosted }) => {
         
         setSubmitting(true);
         try {
+            // Este formulário só envia comentários de primeiro nível (sem coment_pai_id)
             const response = await api.post(`/comentarios/${publicationId}`, { texto: text });
-            onCommentPosted(response.data); // Envia o novo comentário para a página pai atualizar a lista
-            setText(''); // Limpa o campo de texto
+            onCommentPosted(response.data);
+            setText('');
         } catch (error) {
             console.error('Erro ao postar comentário:', error);
             alert('Não foi possível enviar o seu comentário.');
@@ -35,9 +52,7 @@ const CommentForm = ({ publicationId, onCommentPosted }) => {
         }
     };
 
-    // O formulário só aparece se o usuário estiver logado
     if (!signed) return null;
-
     const userInitial = user?.email ? user.email[0].toUpperCase() : '?';
 
     return (
@@ -64,31 +79,29 @@ const CommentForm = ({ publicationId, onCommentPosted }) => {
 };
 
 
-// --- Componente Principal da Página ---
 function PublicationDetailPage() {
   const { publicationId } = useParams();
   const navigate = useNavigate();
   const [publication, setPublication] = useState(null);
-  const [comments, setComments] = useState([]);
+  const [commentTree, setCommentTree] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Busca os dados da publicação e seus comentários
+  // --- 1. NOVO ESTADO PARA CONTROLAR A QUAL COMENTÁRIO ESTAMOS A RESPONDER ---
+  const [replyingTo, setReplyingTo] = useState(null); // Guarda o ID do comentário pai
+
   useEffect(() => {
     const fetchPublicationAndComments = async () => {
       try {
         setLoading(true);
         setError('');
-        
-        // Usamos Promise.all para fazer as duas requisições à API em paralelo, o que é mais eficiente
         const [pubResponse, commentsResponse] = await Promise.all([
           api.get(`/publicacoes/${publicationId}`),
           api.get(`/comentarios/${publicationId}`)
         ]);
-        
         setPublication(pubResponse.data);
-        setComments(commentsResponse.data);
-
+        const tree = buildCommentTree(commentsResponse.data);
+        setCommentTree(tree);
       } catch (err) {
         setError('Não foi possível carregar a publicação e os comentários.');
         console.error(err);
@@ -96,57 +109,52 @@ function PublicationDetailPage() {
         setLoading(false);
       }
     };
-
     fetchPublicationAndComments();
-  }, [publicationId]); // O hook é re-executado se o publicationId mudar
+  }, [publicationId]);
 
-  // Função para adicionar um novo comentário à lista sem precisar recarregar a página
-  const handleCommentPosted = (newComment) => {
-    setComments((prevComments) => [...prevComments, newComment]);
+  // --- 2. FUNÇÕES PARA ABRIR E FECHAR O MODO DE RESPOSTA ---
+  const handleStartReply = (commentId) => {
+    setReplyingTo(commentId);
   };
   
-  // Funções de "placeholder" para o componente PublicationItem não quebrar
-  const handlePostDeleted = () => { 
-    alert('Publicação apagada com sucesso!');
-    navigate('/'); 
-  };
-  const handlePostUpdated = (updatedPost) => { 
-    setPublication(updatedPost); 
+  const handleCancelReply = () => {
+    setReplyingTo(null);
   };
 
-  // --- Renderização condicional ---
-  if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
-  }
+  const handleCommentPosted = () => {
+    // Por simplicidade, recarregamos a página para ver a nova resposta.
+    // No futuro, podemos implementar uma atualização do estado sem reload.
+    window.location.reload();
+  };
+  
+  const handlePostDeleted = () => { navigate('/'); };
+  const handlePostUpdated = (updatedPost) => { setPublication(updatedPost); };
 
-  if (error) {
-    return <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>;
-  }
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
+  if (error) return <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>;
+  if (!publication) return <Alert severity="warning">Publicação não encontrada.</Alert>;
 
-  if (!publication) {
-    return <Alert severity="warning" sx={{ m: 2 }}>Publicação não encontrada.</Alert>;
-  }
-
-  // --- Renderização principal ---
  return (
     <Paper elevation={0}>
-      {/* Exibe o item da publicação principal */}
       <PublicationItem 
         publication={publication} 
         onPostDeleted={handlePostDeleted} 
         onPostUpdated={handlePostUpdated}
       />
-
-      {/* Exibe o formulário para postar um novo comentário */}
       <CommentForm publicationId={publicationId} onCommentPosted={handleCommentPosted} />
-
-      {/* Mapeia e exibe a lista de comentários existentes */}
-      <Box>
-        {comments.length > 0 ? (
-            // A 'key' deve estar no primeiro elemento dentro do map.
-            // O seu código já estava correto aqui.
-            comments.map((comment) => (
-                <CommentItem key={comment.id_comentario} comment={comment} />
+      <Box sx={{ p: 2 }}>
+        {commentTree.length > 0 ? (
+            commentTree.map((comment) => (
+                // --- 3. PASSAR AS NOVAS PROPRIEDADES PARA CADA COMMENTITEM ---
+                <CommentItem 
+                    key={comment.id_comentario} 
+                    comment={comment}
+                    publicationId={publicationId}
+                    isReplying={replyingTo === comment.id_comentario}
+                    onStartReply={handleStartReply}
+                    onCancelReply={handleCancelReply}
+                    onCommentPosted={handleCommentPosted}
+                />
             ))
         ) : (
             <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>

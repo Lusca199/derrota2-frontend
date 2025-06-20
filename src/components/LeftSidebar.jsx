@@ -1,4 +1,5 @@
-// src/components/LeftSidebar.jsx (Versão final com link condicional de Moderação)
+// src/components/LeftSidebar.jsx
+// Versão final com link para Configurações e Moderação
 
 import { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -11,8 +12,9 @@ import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-// --- 1. IMPORTAR O NOVO ÍCONE ---
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+// --- 1. IMPORTAR O NOVO ÍCONE DE CONFIGURAÇÕES ---
+import SettingsIcon from '@mui/icons-material/Settings';
 import { blue } from '@mui/material/colors';
 
 
@@ -23,7 +25,6 @@ function LeftSidebar() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    // A lógica do contador de notificações permanece a mesma
     if (!signed) return;
     const fetchUnreadCount = async () => {
       try {
@@ -50,6 +51,11 @@ function LeftSidebar() {
     handleAccountClose();
     logout();
     navigate('/login');
+  };
+
+  const handleNavigateToSettings = () => {
+    handleAccountClose();
+    navigate('/settings');
   };
 
   if (!signed) {
@@ -84,7 +90,6 @@ function LeftSidebar() {
           </ListItemButton>
         </ListItem>
         
-        {/* --- 2. ADICIONAR O LINK CONDICIONAL PARA MODERAÇÃO --- */}
         {user && user.role === 'MODERATOR' && (
           <ListItem disablePadding>
             <ListItemButton component={RouterLink} to="/moderation" sx={{ borderRadius: '9999px', py: 1 }}>
@@ -132,7 +137,15 @@ function LeftSidebar() {
             transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             sx={{mb: 1}}
         >
-            <MenuItem onClick={handleLogout} sx={{fontWeight: 'bold'}}>
+            {/* --- 2. NOVO ITEM DE MENU ADICIONADO AQUI --- */}
+            <MenuItem onClick={handleNavigateToSettings}>
+              <ListItemIcon>
+                <SettingsIcon fontSize="small" />
+              </ListItemIcon>
+              Configurações
+            </MenuItem>
+
+            <MenuItem onClick={handleLogout} sx={{color: 'error.main'}}>
                 Sair de @{user.email.split('@')[0]}
             </MenuItem>
         </Menu>

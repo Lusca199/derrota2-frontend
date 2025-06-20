@@ -1,66 +1,65 @@
-// src/components/CreatePublicationForm.jsx (versão com upload de mídia)
+// src/components/CreatePublicationForm.jsx (versão com upload de IMAGEM e VÍDEO)
 
 import { useState, useRef } from 'react';
 import api from '../services/api';
 
-// Importações do MUI (adicionamos IconButton, Image, e Close)
+// Importações do MUI (adicionamos MovieIcon e CloseIcon)
 import { Box, TextField, Button, Alert, IconButton, CircularProgress } from '@mui/material';
-import ImageIcon from '@mui/icons-material/Image';
+import MovieIcon from '@mui/icons-material/Movie'; // Ícone atualizado
 import CloseIcon from '@mui/icons-material/Close';
 
 function CreatePublicationForm({ onNewPublication }) {
   const [texto, setTexto] = useState('');
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState('');
+  const [mediaType, setMediaType] = useState(''); // 1. NOVO ESTADO para guardar o tipo de mídia
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // Criamos uma referência para o input de ficheiro escondido
   const fileInputRef = useRef(null);
 
   const handleMediaChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setMediaFile(file);
-      setMediaPreview(URL.createObjectURL(file)); // Gera uma URL local para pré-visualização
+      setMediaPreview(URL.createObjectURL(file));
+      setMediaType(file.type); // Guarda o tipo do ficheiro (ex: 'image/jpeg' ou 'video/mp4')
     }
   };
 
   const removeMedia = () => {
     setMediaFile(null);
     setMediaPreview('');
-    fileInputRef.current.value = null; // Limpa o valor do input
+    setMediaType(''); // Limpa também o tipo
+    fileInputRef.current.value = null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (!texto.trim() && !mediaFile) {
-      setError('A publicação precisa de ter texto ou imagem.');
+      setError('A publicação precisa de ter texto ou um ficheiro de mídia.');
       return;
     }
     setLoading(true);
 
-    // Usamos FormData para enviar ficheiros e texto juntos
     const formData = new FormData();
     formData.append('texto', texto);
     if (mediaFile) {
-      formData.append('publicationMedia', mediaFile); // O nome 'publicationMedia' deve ser o mesmo do back-end
+      formData.append('publicationMedia', mediaFile);
     }
 
     try {
       const response = await api.post('/publicacoes', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data', // O Axios geralmente faz isso sozinho com FormData
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      // Limpa o formulário após o sucesso
       setTexto('');
       removeMedia();
       onNewPublication(response.data);
     } catch (err) {
       console.error('Erro ao criar publicação:', err);
-      setError('Não foi possível criar a publicação. Tente novamente.');
+      const errorMessage = err.response?.data?.error || 'Não foi possível criar a publicação. Verifique o tamanho e tipo do ficheiro.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -80,25 +79,30 @@ function CreatePublicationForm({ onNewPublication }) {
           InputProps={{ disableUnderline: true, sx: { fontSize: '20px', paddingY: '12px' } }}
         />
 
-        {/* Pré-visualização da imagem selecionada */}
+        {/* --- 2. LÓGICA DE PRÉ-VISUALIZAÇÃO CONDICIONAL --- */}
         {mediaPreview && (
           <Box sx={{ mt: 2, position: 'relative' }}>
-            <IconButton onClick={removeMedia} sx={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.5)', '&:hover': {backgroundColor: 'rgba(0,0,0,0.7)'} }}>
+            <IconButton onClick={removeMedia} sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1, backgroundColor: 'rgba(0,0,0,0.5)', '&:hover': {backgroundColor: 'rgba(0,0,0,0.7)'} }}>
               <CloseIcon sx={{color: 'white'}} />
             </IconButton>
-            <img src={mediaPreview} alt="Pré-visualização" style={{ width: '100%', borderRadius: '16px', maxHeight: '400px', objectFit: 'cover' }} />
+            
+            {/* Se for imagem, mostra <img>. Se for vídeo, mostra <video>. */}
+            {mediaType.startsWith('image/') ? (
+              <img src={mediaPreview} alt="Pré-visualização" style={{ width: '100%', borderRadius: '16px', maxHeight: '400px', objectFit: 'cover' }} />
+            ) : mediaType.startsWith('video/') ? (
+              <video src={mediaPreview} controls autoPlay muted style={{ width: '100%', borderRadius: '16px', maxHeight: '400px' }} />
+            ) : null}
           </Box>
         )}
 
         {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-          {/* Input de ficheiro escondido */}
-          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleMediaChange} hidden />
+          {/* --- 3. INPUT AGORA ACEITA IMAGEM E VÍDEO --- */}
+          <input type="file" accept="image/*,video/*" ref={fileInputRef} onChange={handleMediaChange} hidden />
           
-          {/* Botão para acionar o input de ficheiro */}
           <IconButton color="primary" onClick={() => fileInputRef.current.click()}>
-            <ImageIcon />
+            <MovieIcon />
           </IconButton>
           
           <Button type="submit" variant="contained" disabled={loading || (!texto.trim() && !mediaFile)} sx={{ px: 2, py: 1, fontSize: '15px' }}>

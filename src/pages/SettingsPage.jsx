@@ -1,9 +1,9 @@
 // Ficheiro: Testes/derrota2-frontend/src/pages/SettingsPage.jsx
-// VERSÃO FINAL COM MODAL INTEGRADO
+// VERSÃO CORRETA E DEFINITIVA
 
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import TwoFactorAuthModal from '../components/TwoFactorAuthModal'; // 1. IMPORTAR O NOVO MODAL
+import TwoFactorAuthModal from '../components/TwoFactorAuthModal';
 
 // Importações do MUI
 import {
@@ -27,25 +27,25 @@ function SettingsPage() {
   const [error, setError] = useState('');
   const [is2FAModalOpen, set2FAModalOpen] = useState(false);
 
-  // Função para buscar todos os dados, que pode ser chamada novamente
-  const fetchAllSettings = async () => {
-    try {
-      setLoading(true);
-      const [notifResponse, accountResponse] = await Promise.all([
-        api.get('/settings/notifications'),
-        api.get('/settings/account')
-      ]);
-      setNotificationSettings(notifResponse.data);
-      setAccountSettings(accountResponse.data);
-    } catch (err) {
-      console.error("Erro ao buscar configurações:", err);
-      setError('Não foi possível carregar as suas configurações.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Efeito para buscar TODAS as configurações quando a página carrega
   useEffect(() => {
+    const fetchAllSettings = async () => {
+      try {
+        setLoading(true);
+        // Usamos Promise.all para fazer as duas chamadas em paralelo
+        const [notifResponse, accountResponse] = await Promise.all([
+          api.get('/settings/notifications'),
+          api.get('/settings/account')
+        ]);
+        setNotificationSettings(notifResponse.data);
+        setAccountSettings(accountResponse.data);
+      } catch (err) {
+        console.error("Erro ao buscar configurações:", err);
+        setError('Não foi possível carregar as suas configurações.');
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchAllSettings();
   }, []);
 
@@ -63,11 +63,8 @@ function SettingsPage() {
     }
   };
 
-  // 2. FUNÇÃO CALLBACK para ser chamada quando a 2FA for ativada com sucesso
   const handle2FAActivationSuccess = () => {
-    // Atualiza o estado local para refletir a mudança sem precisar recarregar a página
     setAccountSettings(prev => ({ ...prev, autenticacao_2fa: true }));
-    // Poderíamos também exibir uma notificação de sucesso aqui
   };
 
   if (loading) {
@@ -138,7 +135,6 @@ function SettingsPage() {
         </Paper>
       )}
 
-      {/* 3. RENDERIZAR O MODAL e passar as props necessárias */}
       <TwoFactorAuthModal 
         open={is2FAModalOpen} 
         onClose={() => set2FAModalOpen(false)}
